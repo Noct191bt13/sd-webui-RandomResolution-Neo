@@ -124,6 +124,11 @@ class Script(scripts.Script):
                         value="Equal Weights", label="Weight Mode"
                     )
                 with gr.Row():
+                    orientation = gr.Radio(
+                        choices=["Both", "Vertical", "Horizontal"],
+                        value="Both", label="Orientation"
+                    )
+                with gr.Row():
                     min_dim = gr.Slider(minimum=256, maximum=3072, step=64, value=512,
                                       label="Min Dimension")
                     max_dim = gr.Slider(minimum=256, maximum=3072, step=64, value=2048,
@@ -283,12 +288,12 @@ class Script(scripts.Script):
 
         remove_small.click(fn=lambda n, c: remove_by_size(n, c, 0.3, float('inf')), inputs=[preset_dropdown, current_resolutions], outputs=[current_resolutions])
 
-        return [is_enabled, preset_dropdown, current_resolutions, weight_mode, min_dim, max_dim]
+        return [is_enabled, preset_dropdown, current_resolutions, weight_mode, orientation, min_dim, max_dim]
 
     def show(self, is_img2img):
         return scripts.AlwaysVisible
 
-    def before_process_batch(self, p, is_enabled, preset_name, current_resolutions, weight_mode, min_dim, max_dim, *args, **kwargs):
+    def before_process_batch(self, p, is_enabled, preset_name, current_resolutions, weight_mode, orientation, min_dim, max_dim, *args, **kwargs):
         if not is_enabled:
             return
 
@@ -322,6 +327,14 @@ class Script(scripts.Script):
 
         if detected == "Anima":
             res_list = [self._validate_anima_resolution(w, h) for w, h in res_list]
+
+        if orientation == "Vertical":
+            res_list = [(w, h) for w, h in res_list if h > w]
+        elif orientation == "Horizontal":
+            res_list = [(w, h) for w, h in res_list if w > h]
+
+        if not res_list:
+            res_list = [(512, 768)] if orientation == "Vertical" else [(768, 512)]
 
         weights = None
         if weight_mode == "Favor Smaller":
