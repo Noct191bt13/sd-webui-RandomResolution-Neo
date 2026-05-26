@@ -297,6 +297,9 @@ class Script(scripts.Script):
         if not is_enabled:
             return
 
+        if getattr(p, 'enable_hr', False):
+            return
+
         if hasattr(p, 'sd_model') and hasattr(p.sd_model, 'is_wan') and p.sd_model.is_wan:
             detected = "Anima"
         elif hasattr(p, 'sd_model') and hasattr(p.sd_model, 'is_sdxl') and p.sd_model.is_sdxl:
